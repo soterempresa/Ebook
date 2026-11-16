@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAPA DA VIDA — Ebook Interativo</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;900&display=swap');
+  body { font-family: 'Inter', sans-serif; background: #f5f3fa; }
+  .font-serif-display { font-family: 'Playfair Display', serif; }
+  .view { display: none !important; }
+  .view.active { display: block !important; }
+  #view-entry.active { display: flex !important; }
+  .banner-cosmic {
+    background: linear-gradient(135deg, #1a1a3e 0%, #2d1b4e 30%, #4a2c6e 60%, #1a1a3e 100%);
+    position: relative; overflow: hidden;
+  }
+  .banner-cosmic::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at 20% 50%, rgba(147,51,234,0.3), transparent 50%),
+                radial-gradient(circle at 80% 30%, rgba(59,130,246,0.3), transparent 50%);
+  }
+  .banner-numbers {
+    background: linear-gradient(135deg, #3d1f56 0%, #6b2fa0 50%, #2d1b4e 100%);
+    position: relative; overflow: hidden;
+  }
+  .banner-numbers::after {
+    content: '1 2 3 4 5 6 7 8 9 11 22'; position: absolute; inset: 0;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+    font-size: 4rem; color: rgba(255,255,255,0.08); font-weight: 900; letter-spacing: 1rem;
+    pointer-events: none;
+  }
+  .banner-warm {
+    background: linear-gradient(135deg, #8b5a2b 0%, #c9874d 50%, #6b3a1f 100%);
+    position: relative; overflow: hidden;
+  }
+  .banner-mystic {
+    background: linear-gradient(135deg, #2d1b4e 0%, #5b2c8e 40%, #1a0f2e 100%);
+    position: relative; overflow: hidden;
+  }
+  .banner-mystic::before {
+    content: '♈ ♉ ♊ ♋ ♌ ♍ ♎ ♏ ♐ ♑ ♒ ♓'; position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3rem; color: rgba(255,255,255,0.1); letter-spacing: 1rem;
+    pointer-events: none;
+  }
+  .banner-light {
+    background: linear-gradient(135deg, #f5e6d3 0%, #e8d4b8 50%, #d4b896 100%);
+    position: relative; overflow: hidden;
+  }
+  .banner-dark {
+    background: linear-gradient(135deg, #1a0f0a 0%, #3d2817 50%, #0a0505 100%);
+    position: relative; overflow: hidden;
+  }
+  .badge { display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+  .badge-blue { background: #1a3a6b; color: white; }
+  .badge-coral { background: #e8835a; color: white; }
+  .badge-lilac { background: #c4a8d8; color: white; }
+  .badge-green { background: #8a9a5b; color: white; }
+  .badge-gray { background: #9ca3af; color: white; }
+  .nav-item { flex: 1; text-align: center; padding: 8px 0; cursor: pointer; color: #6b7280; transition: color 0.2s; }
+  .nav-item.active { color: #1a3a6b; }
+  .nav-item svg { width: 24px; height: 24px; margin: 0 auto 2px; }
+  .chapter-row { display: flex; align-items: center; padding: 16px 0; border-bottom: 1px solid #f3f4f6; cursor: pointer; transition: background 0.2s; }
+  .chapter-row:hover { background: #faf8fc; }
+  .chapter-number { font-size: 2rem; font-weight: 800; color: #d1d5db; margin-right: 16px; min-width: 50px; }
+  .chapter-arrow { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-left: auto; flex-shrink: 0; }
+  .arrow-blue { background: #1a3a6b; color: white; }
+  .arrow-coral { background: #e8835a; color: white; }
+  .arrow-lilac { background: #c4a8d8; color: white; }
+  .arrow-green { background: #8a9a5b; color: white; }
+  .arrow-gray { background: #9ca3af; color: white; }
+  .summary-card { border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .summary-header { padding: 12px 16px; font-weight: 700; color: white; text-align: center; }
+  .summary-row { display: flex; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid #f3f4f6; }
+  .summary-row:last-child { border-bottom: none; }
+  .number-value { font-weight: 700; font-size: 1.1rem; }
+  .num-blue { color: #3d6b8f; }
+  .num-gold { color: #d4a017; }
+  .num-green { color: #5a8a4b; }
+  .num-red { color: #e85a3a; }
+  .btn-primary { background: #1a3a6b; color: white; padding: 14px 24px; border-radius: 8px; font-weight: 700; text-align: center; cursor: pointer; transition: background 0.2s; border: none; width: 100%; }
+  .btn-primary:hover { background: #0f2a52; }
+  .content-card { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); margin: 20px; }
+  @media print {
+    .no-print { display: none !important; }
+    .view { display: block !important; page-break-after: always; }
+    body { background: white; }
+  }
+</style>
+</head>
+<body class="pb-20">
+
+<!-- TELA 0: Entrada de dados -->
+ <section id="hero" class="hero">
+<div id="view-entry" class="view active min-h-screen flex items-center justify-center p-4">
+  <div class="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
+    <div class="text-center mb-8">
+      <h1 class="font-serif-display text-3xl font-black text-white mb-2" style="background: linear-gradient(135deg, #1a1a3e, #6b2fa0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; padding: 20px; border-radius: 12px;">MAPA DA VIDA</h1>
+      <p class="text-gray-500 text-sm">Um guia prático de numerologia para descobrir seu propósito, potencializar o autoconhecimento e transformar sua jornada</p>
+    </div>
+    <label class="block text-sm font-semibold text-gray-700 mb-2">Nome completo de nascimento</label>
+    <input id="inputName" type="text" placeholder="Ex.: Gilmar Novaki Coelho" class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:border-purple-500">
+    <label class="block text-sm font-semibold text-gray-700 mb-2">Data de nascimento</label>
+    <input id="inputDate" type="date" class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-6 focus:outline-none focus:border-purple-500">
+    <button onclick="generateEbook()" class="btn-primary">Começar Minha Jornada</button>
+    <p id="entryError" class="text-red-500 text-sm mt-3 hidden">⚠️ Preencha nome e data de nascimento.</p>
+  </div>
+</div>
+</section>
+
+<!-- TELA 1: Hero / Capa -->
+<div id="view-hero" class="view">
+  <div class="banner-numbers h-80 flex items-center justify-center relative">
+    <div class="relative z-10 text-center">
+      <h1 class="font-serif-display text-5xl md:text-6xl font-black text-white leading-tight">MAPA<br>DA VIDA</h1>
+      <p class="text-white/80 mt-3 text-sm">Um Guia Prático de Numerologia</p>
+    </div>
+  </div>
+  <div class="flex justify-center -mt-16 relative z-20">
+    <div class="w-32 h-32 rounded-full bg-gradient-to-br from-orange-400 to-red-500 border-4 border-white shadow-lg flex items-center justify-center text-5xl">✨</div>
+  </div>
+  <div class="text-center mt-4">
+    <h2 id="heroName" class="text-2xl font-bold text-gray-900"></h2>
+    <p id="heroDate" class="text-gray-500"></p>
+  </div>
+  <div class="content-card mt-8">
+    <h3 class="text-2xl font-bold text-gray-900 mb-4">Bem-vindo(a), <span class="userName"></span></h3>
+    <p class="text-gray-600">Este é o seu **mapa numerológico completo** — uma bússola interna para navegar a vida com mais consciência e intenção.</p>
+    <div class="summary-card mt-6">
+      <div class="summary-header" style="background: #3d6b8f;">Seus Números Principais</div>
+      <div class="summary-row"><span class="font-semibold">Caminho de Vida</span><span id="sumLifePath" class="number-value num-blue"></span></div>
+      <div class="summary-row"><span class="font-semibold">Número de Expressão</span><span id="sumExpression" class="number-value num-gold"></span></div>
+      <div class="summary-row"><span class="font-semibold">Número da Alma</span><span id="sumSoul" class="number-value num-green"></span></div>
+      <div class="summary-row"><span class="font-semibold">Número de Personalidade</span><span id="sumPersonality" class="number-value num-red"></span></div>
+    </div>
+    <p class="text-gray-600 mt-6">Abaixo está o índice completo. Clique em qualquer capítulo para começar.</p>
+  </div>
+  <div class="flex justify-center gap-4 mt-6 no-print">
+    <button onclick="showView('view-index')" class="btn-primary max-w-xs">Ver Índice Completo</button>
+  </div>
+</div>
+
+<!-- TELA 2: Índice -->
+<div id="view-index" class="view">
+  <div class="content-card">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-4xl font-black text-gray-900">Índice</h2>
+    </div>
+    <div id="indexList"></div>
+  </div>
+</div>
+
+<!-- Capítulos renderizados dinamicamente -->
+<div id="chaptersContainer"></div>
+
+<!-- NAVBAR INFERIOR -->
+<div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex no-print z-50">
+  <div class="nav-item active" onclick="showView('view-hero')">
+    <svg fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
+    <div class="text-xs font-semibold">Início</div>
+  </div>
+  <div class="nav-item" onclick="showView('view-index')">
+    <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>
+    <div class="text-xs font-semibold">Capítulos</div>
+  </div>
+  <div class="nav-item" onclick="showView('view-entry')">
+    <svg fill="currentColor" viewBox="0 0 20 20"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/></svg>
+    <div class="text-xs font-semibold">Refazer</div>
+  </div>
+</div>
+
+<script>
+const LETTER_VALUES = {A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8,I:9,J:1,K:2,L:3,M:4,N:5,O:6,P:7,Q:8,R:9,S:1,T:2,U:3,V:4,W:5,X:6,Y:7,Z:8};
+const VOWELS = new Set(['A','E','I','O','U']);
+
+function reduceNumber(num) {
+  if (num === 11 || num === 22 || num === 33) return num;
+  if (num < 10) return num;
+  const sum = String(num).split('').reduce((a,b) => a + parseInt(b,10), 0);
+  return reduceNumber(sum);
+}
+
+function normalizeName(name) {
+  return name.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z]/g,'');
+}
+
+function calcNameNumbers(fullName) {
+  const clean = normalizeName(fullName);
+  if (!clean) return null;
+  let total = 0, vowelSum = 0, consonantSum = 0;
+  for (const ch of clean) {
+    const val = LETTER_VALUES[ch];
+    if (!val) continue;
+    total += val;
+    if (VOWELS.has(ch)) vowelSum += val;
+    else consonantSum += val;
+  }
+  return {
+    expression: reduceNumber(total),
+    soul: reduceNumber(vowelSum),
+    personality: reduceNumber(consonantSum)
+  };
+}
+
+function calcLifePath(dateStr) {
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return null;
+  const digits = parts.join('').split('').map(Number);
+  return reduceNumber(digits.reduce((a,b) => a + b, 0));
+}
+
+let userData = {};
+
+// Conteúdo do ebook (capítulos do .txt)
+const CHAPTERS = [
+  {
+    title: "O Que é Numerologia e Por Que Ela Transforma Vidas",
+    badge: "COMECE AQUI",
+    banner: "banner-numbers",
+    badgeClass: "badge-blue",
+    content: `
+      <h2 class="text-3xl font-bold text-gray-900 mb-4">O Que é Numerologia e Por Que Ela Transforma Vidas</h2>
+      <p class="text-gray-700 mb-4">Você já parou para pensar por que certas datas se repetem na sua vida? Por que alguns números parecem te perseguir? Por que você se sente atraído por determinadas pessoas, carreiras ou situações — sempre as mesmas, de formas diferentes?</p>
+      <p class="text-gray-700 mb-4">A resposta pode estar nos números.</p>
+      <p class="text-gray-700 mb-4">A <strong>numerologia</strong> é uma das mais antigas formas de autoconhecimento da humanidade. Muito antes da psicologia moderna, antes dos testes de personalidade e das avaliações de carreira, civilizações inteiras já estudavam os números como chaves para compreender a essência do ser humano.</p>
+      <p class="text-gray-700 mb-4">Mas atenção: numerologia não é adivinhação. Não é horóscopo disfarçado. Não é superstição.</p>
+      <p class="text-gray-700 mb-4">A numerologia é uma <strong>linguagem simbólica</strong> que traduz padrões. Assim como a música é feita de frequências e a natureza é feita de proporções matemáticas, a sua vida também possui uma assinatura numérica — e ela revela muito sobre quem você é, por que age como age e para onde está caminhando.</p>
+      <h3 class="text-2xl font-bold text-gray-900 mb-4 mt-8">O que a numerologia pode fazer por você?</h3>
+      <ul class="list-disc pl-6 text-gray-700 space-y-2 mb-6">
+        <li><strong>Clareza sobre sua personalidade</strong> — entender seus pontos fortes e fracos sem julgamento</li>
+        <li><strong>Compreensão dos seus relacionamentos</strong> — descobrir por que certas dinâmicas se repetem</li>
+        <li><strong>Direcionamento de carreira</strong> — identificar o tipo de trabalho que faz sua alma vibrar</li>
+        <li><strong>Conexão com seu propósito</strong> — perceber a missão maior por trás das suas experiências</li>
+        <li><strong>Autoaceitação</strong> — parar de lutar contra quem você é e começar a florescer como você é</li>
+      </ul>
+      <h3 class="text-2xl font-bold text-gray-900 mb-4 mt-8">Para quem é este livro?</h3>
+      <p class="text-gray-700 mb-4">Este livro é para você que:</p>
+      <ul class="list-disc pl-6 text-gray-700 space-y-2 mb-6">
+        <li>Sente que existe algo mais profundo por trás das aparências</li>
+        <li>Já se perguntou "por que eu sou assim?"</li>
+        <li>Quer entender seus relacionamentos de forma mais consciente</li>
+        <li>Busca um caminho de autoconhecimento prático e acessível</li>
+        <li>Acredita que a vida tem um sentido maior e quer descobrir o seu</li>
+      </ul>
+      <p class="text-gray-700 mb-4">Você não precisa de nenhum conhecimento prévio. Tudo será explicado passo a passo, com linguagem simples e exercícios práticos ao final de cada capítulo.</p>
+      <p class="text-gray-700 mb-4">Ao final desta leitura, você terá em mãos o seu <strong>mapa numerológico completo</strong> — uma bússola interna para navegar a vida com mais consciência e intenção.</p>
+      <blockquote class="border-l-4 border-purple-300 pl-4 italic text-gray-600 my-6">"Os números são a linguagem universal oferecida por Deus para que o homem possa compreender a verdade." — Pitágoras</blockquote>
+    `
+  },
+  {
+    title: "A Origem Sagrada dos Números",
+    badge: "COMECE AQUI",
+    banner: "banner-cosmic",
+    badgeClass: "badge-blue",
+    content: `
+      <h2 class="text-3xl font-bold text-gray-900 mb-4">A Origem Sagrada dos Números</h2>
+      <p class="text-gray-700 mb-4">Para entender a numerologia, precisamos voltar no tempo. Muito no tempo.</p>
+      <h3 class="text-2xl font-bold text-gray-900 mb-4 mt-8">As Civilizações Antigas e os Números</h3>
+      <p class="text-gray-700 mb-4">Há mais de 4.000 anos, os <strong>babilônios</strong> já usavam números não apenas para contar mercadorias, mas para decifrar os ciclos do cosmos. Os <strong>egípcios</strong> construíram suas pirâmides com proporções numéricas precisas — e acreditavam que os números eram a própria linguagem dos deuses.</p>
+      <p class="text-gray-700 mb-4">Na <strong>China antiga</strong>, o *I Ching* — o Livro das Mutações — utilizava combinações numéricas para mapear as forças da natureza e do destino humano.</p>
+      <p class="text-gray-700 mb-4">Na <strong>Índia</strong>, os textos védicos descreviam a realidade como vibração, e cada número correspondia a uma frequência específica do universo.</p>
+      <h3 class="text-2xl font-bold text-gray-900 mb-4 mt-8">Pitágoras: O Pai da Numerologia Moderna</h3>
+      <p class="text-gray-700 mb-4">Foi o filósofo e matemático grego <strong>Pitágoras</strong> (570–495 a.C.) quem sistematizou o conhecimento numérico de forma que usamos até hoje. Após viajar pelo Egito, Babilônia e Índia, Pitágoras retornou à Grécia com uma convicção profunda:</p>
+      <blockquote class="border-l-4 border-purple-300 pl-4 italic text-gray-600 my-6">"Tudo é número."</blockquote>
+      <p class="text-gray-700 mb-4">Para ele, os números não eram apenas ferramentas de cálculo — eram <strong>arquétipos vivos</strong>, essências que governavam a realidade. O número 1 representava a unidade divina. O 2, a dualidade. O 3, a criação. E assim por diante.</p>
+      <p class="text-gray-700 mb-4">Pitágoras ensinava que cada ser humano nascia sob determinadas vibrações numéricas, e que compreender essas vibrações era o caminho para a sabedoria.</p>
+      <h3 class="text-2xl font-bold text-gray-900 mb-4 mt-8">A Numerologia Hoje</h3>
+      <p class="text-gray-700 mb-4">A numerologia que estudamos hoje é baseada principalmente no <strong>sistema pitagórico</strong>, que utiliza os números de 1 a 9 (mais os números mestres 11, 22 e 33) como chaves de interpretação.</p>
+      <p class="text-gray-700 mb-4">Esse sistema é o mais acessível, o mais estudado e o mais utilizado no ocidente. É ele que vamos explorar juntos neste livro.</p>
+    `
+  },
+  {
+    title: "Como Funciona o Mapa Numerológico",
+    badge: "COMECE AQUI",
+    banner: "banner-numbers",
+    badgeClass: "badge-blue",
+    content: `
+      <h2 class="text-3xl font-bold text-gray-900 mb-4">Como Funciona o Mapa Numerológico</h2>
+      <p class="text-gray-700 mb-4">O <strong>mapa numerológico</strong> é um conjunto de números-chave que descrevem diferentes aspectos da sua personalidade e da sua jornada de vida.</p>
+      <p class="text-gray-700 mb-4">Pense nele como um mapa astral, mas baseado em números em vez de astros. Cada número do seu mapa revela uma camada diferente de quem você é.</p>
+      <h3 class="text-2xl font-bold text-gray-900 mb-4 mt-8">Os Principais Números do Mapa</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse mb-6">
+          <thead>
+            <tr class="bg-purple-50">
+              <th class="p-3 border">Número</th>
+              <th class="p-3 border">O que revela</th>
+              <th class="p-3 border">Como é calculado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="p-3 border font-semibold">Caminho de Vida</td><td class="p-3 border">Sua missão, o propósito da sua alma nesta encarnação</td><td class="p-3 border">Data de nascimento</td></tr>
+            <tr><td class="p-3 border font-semibold">Número de Expressão</td><td class="p-3 border">Seus talentos, habilidades e a forma como você se expressa no mundo</td><td class="p-3 border">Nome completo</td></tr>
+            <tr><td class="p-3 border font-semibold">Número da Alma</td><td class="p-3 border">Seus desejos mais profundos, o que seu coração realmente quer</td><td class="p-3 border">Vogais do nome</td></tr>
+            <tr><td class="p-3 border font-semibold">Número de Personalidade</td><td class="p-3 border">Como os outros te veem, a "máscara" que você apresenta ao mundo</td><td class="p-3 border">Consoantes do nome</td></tr>
+            <tr><td class="p-3 border font-semibold">Número de Lição</td><td class="p-3 border">O desafio que você precisa superar nesta vida</td><td class="p-3 border">Número ausente no nome</td></tr>
+            <tr><td class="p-3 border font-semibold">Ano Pessoal</td><td class="p-3 border">A energia que predomina no seu ano atual</td><td class="p-3 border">Data de nascimento + ano vigente</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-gray-700 mb-4">Cada um desses números conta uma parte da sua história. Quando você compreende todos eles juntos, tem uma visão tridimensional de si mesmo — algo que nenhum teste de personalidade convencional consegue oferecer.</p>
+      <h3 class="text-2xl font-bold text-gray-900 mb-4 mt-8">Uma Ferramenta de Autoconhecimento, Não de Determinismo</h3>
+      <p class="text-gray-700 mb-4">É fundamental entender: a numerologia não determina seu destino. Ela revela <strong>tendências, potenciais e desafios</strong>. O livre-arbítrio sempre existe. Pense nos números como um mapa de navegação — ele mostra onde estão os recifes e as correntes favoráveis, mas é você quem decide como conduzir o barco.</p>
+    `
+  },
+  {
+    title: "Calculando Seu Número de Caminho de Vida",
+    badge: "COMECE AQUI",
+    banner: "banner-numbers",
+    badgeClass: "badge-blue",
+    content: `
+      <h2 class="text-3xl font-bold text-gray-900 mb-4">Calculando Seu Número de Caminho de Vida</h2>
+      <p class="text-gray-700 mb-4">Vamos começar pelo número mais importante do seu mapa: o <strong>Caminho de Vida</strong> (também chamado de Número de Destino ou Missão de Vida).</p>
+      <p class="text-gray-700 mb-4">Ele é calculado a partir da sua <strong>data de nascimento completa</strong> e revela a missão principal da sua alma nesta encarnação.</p>
+      <h3 class="text-2xl font-bold text-gray-900 mb-4 mt-8">Passo a Passo</h3>
+      <ol class="list-decimal pl-6 text-gray-700 space-y-2 mb-6">
+        <li>Escreva sua data de nascimento completa (dia, mês e ano com todos os dígitos).</li>
+        <li>Some todos os algarismos separadamente.</li>
+        <li>Reduza o resultado a um único dígito (de 1 a 9), SOMENTE se não for um número mestre (11, 22 ou 33).</li>
+      </ol>
+      <h3 class="text-2xl font-bold text-gray-900 mb-4 mt-8">Exemplos Práticos</h3>
+      <p class="text-gray-700 mb-2"><strong>Data: 15/03/1990</strong></p>
+      <p class="text-gray-700 mb-2">1 + 5 + 0 + 3 + 1 + 9 + 9 + 0 = 28 → 2 + 8 = 10 → 1 + 0 = 1. <strong>Caminho de Vida: 1</strong></p>
+      <p class="text-gray-700 mb-4"><strong>Data: 29/11/1985</strong></p>
+      <p class="text-gray-700 mb-4">2 + 9 + 1 + 1 + 1 + 9 + 8 + 5 = 36 → 3 + 6 = 9. <strong>Caminho de Vida: 9</strong></p>
+      <div class="bg-purple-50 border-l-4 border-purple-400 p-6 rounded-lg my-6">
+        <p class="text-xl font-bold text-purple-900">Seu Caminho de Vida é o <span id="ch4LifePath"></span></p>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-900 mb-4 mt-8">Atenção aos Números Mestres</h3>
+      <p class="text-gray-700 mb-4">Se em qualquer etapa da redução você encontrar <strong>11, 22 ou 33</strong>, NÃO reduza. Esses são os chamados <strong>números mestres</strong> e possuem uma vibração especial — falaremos deles com detalhes no Capítulo 6.</p>
+    `
+  },
+  {
+    title: "O Significado Profundo de Cada Número (1 a 9)",
+    badge: "LIÇÕES EXISTENCIAIS",
+    banner: "banner-mystic",
+    badgeClass: "badge-lilac",
+    content: `
+      <h2 class="text-3xl font-bold text-gray-900 mb-4">O Significado Profundo de Cada Número (1 a 9)</h2>
+      <p class="text-gray-700 mb-6">Agora que você calculou seu Caminho de Vida, vamos mergulhar no significado de cada número. Leia com atenção o número que corresponde ao seu caminho — mas também leia os outros. Cada um carrega uma sabedoria.</p>
+      <div id="numberDetails"></div>
+    `
+  },
+  {
+    title: "Os Números Mestres: 11, 22 e 33",
+    badge: "LIÇÕES EXISTENCIAIS",
+    banner: "banner-mystic",
+    badgeClass: "badge-lilac",
+    content: `
+      <h2 class="text-3xl font-bold text-gray-900 mb-4">Os Números Mestres: 11, 22 e 33</h2>
+      <p class="text-gray-700 mb-4">Os <strong>números mestres</strong> não são reduzidos. Eles carregam uma vibração mais elevada e representam um potencial espiritual extraordinário — mas também um desafio proporcionalmente maior.</p>
+      <p class="text-gray-700 mb-4">Nem todas as pessoas com um número mestre no mapa vivem plenamente essa energia. Muitos passam a vida operando no número reduzido (11→2, 22→4, 33→6) até que estejam prontos para assumir a vibração mestra.</p>
+      <div class="bg-purple-50 p-6 rounded-lg mb-4"><h3 class="font-bold text-purple-900">Número Mestre 11 — O Iluminador</h3><p class="text-gray-700">Missão: ser um canal de inspiração espiritual e iluminar caminhos. Dons: intuição quase psíquica, capacidade de inspirar multidões. Desafios: ansiedade, sobrecarga sensorial. Conselho: praticar aterramento e contato com a natureza.</p></div>
+      <div class="bg-purple-50 p-6 rounded-lg mb-4"><h3 class="font-bold text-purple-900">Número Mestre 22 — O Mestre Construtor</h3><p class="text-gray-700">Missão: transformar sonhos grandiosos em realidade concreta. Dons: capacidade de realizar grandes projetos, disciplina com visão. Desafios: pressão interna constante. Conselho: dividir a jornada em passos concretos.</p></div>
+      <div class="bg-purple-50 p-6 rounded-lg mb-4"><h3 class="font-bold text-purple-900">Número Mestre 33 — O Mestre do Amor</h3><p class="text-gray-700">Missão: encarnar o amor incondicional e servir à humanidade. Dons: cura extraordinária, amor compassivo. Desafios: carga emocional imensa, tendência ao martírio. Conselho: cuidar de si mesmo é condição para cuidar dos outros.</p></div>
+    `
+  },
+  {
+    title: "Número de Expressão: Seus Talentos Naturais",
+    badge: "LIÇÕES EXISTENCIAIS",
+    banner: "banner-mystic",
+    badgeClass: "badge-lilac",
+    content: `
+      <h2 class="text-3xl font-bold text-gray-900 mb-4">Número de Expressão: Seus Talentos Naturais</h2>
+      <p class="text-gray-700 mb-4">O <strong>Número de Expressão</strong> revela os <strong>talentos, habilidades e dons</strong> que você traz para cumprir sua missão de vida. Enquanto o Caminho de Vida mostra <em>para onde</em> você vai, a Expressão mostra <em>com quais ferramentas</em> você viaja.</p>
+      <h3 class="text-2xl font-bold text-gray-900 mb-4 mt-8">Como Calcular</h3>
+      <p class="text-gray-700 mb-4">Converta as letras do seu <strong>nome completo de nascimento</strong> em números, usando a tabela pitagórica:</p>
+      <div class="overflow-x-auto mb-6">
+        <table class="w-full text-center border-collapse">
+          <thead><tr class="bg-purple-50"><th class="p-3 border">1</th><th class="p-3 border">2</th><th class="p-3 border">3</th><th class="p-3 border">4</th><th class="p-3 border">5</th><th class="p-3 border">6</th><th class="p-3 border">7</th><th class="p-3 border">8</th><th class="p-3 border">9</th></tr></thead>
+          <tbody>
+            <tr><td class="p-3 border">A</td><td class="p-3 border">B</td><td class="p-3 border">C</td><td class="p-3 border">D</td><td class="p-3 border">E</td><td class="p-3 border">F</td><td class="p-3 border">G</td><td class="p-3 border">H</td><td class="p-3 border">I</td></tr>
+            <tr><td class="p-3 border">J</td><td class="p-3 border">K</td><td class="p-3 border">L</td><td class="p-3 border">M</td><td class="p-3 border">N</td><td class="p-3 border">O</td><td class="p-3 border">P</td><td class="p-3 border">Q</td><td class="p-3 border">R</td></tr>
+            <tr><td class="p-3 border">S</td><td class="p-3 border">T</td><td class="p-3 border">U</td><td class="p-3 border">V</td><td class="p-3 border">W</td><td class="p-3 border">X</td><td class="p-3 border">Y</td><td class="p-3 border">Z</td><td class="p-3 border"></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-gray-700 mb-4">Some todos os números correspondentes às letras do seu nome completo e reduza a um único dígito (exceto números mestres).</p>
+      <div class="bg-red-50 border-l-4 border-red-400 p-6 rounded-lg my-6">
+        <p class="text-xl font-bold text-red-900">Seu Número de Expressão é o <span id="ch7Expression"></span></p>
+      </div>
+      <p class="text-gray-700 mb-4"><strong>Exemplo:</strong> MARIA SILVA = M(4)+A(1)+R(9)+I(9)+A(1) = 24 → 6; S(1)+I(9)+L(3)+V(4)+A(1) = 18 → 9; Total 6+9=15 → 6. <strong>Expressão: 6</strong></p>
+      <h3 class="text-2xl font-bold text-gray-900 mb-4 mt-8">O Que Cada Expressão Revela</h3>
+      <ul class="list-disc pl-6 text-gray-700 space-y-2">
+        <li><strong>1:</strong> Talento para liderar e inovar</li>
+        <li><strong>2:</strong> Dom para mediar, cooperar e intuir</li>
+        <li><strong>3:</strong> Dom para comunicar, criar e inspirar</li>
+        <li><strong>4:</strong> Talento para construir, organizar e estruturar</li>
+        <li><strong>5:</strong> Dom para adaptar, comunicar e libertar</li>
+        <li><strong>6:</strong> Talento para cuidar, curar e harmonizar</li>
+        <li><strong>7:</strong> Dom para analisar, pesquisar e compreender</li>
+        <li><strong>8:</strong> Talento para realizar, administrar e prosperar</li>
+        <li><strong>9:</strong> Dom para servir, ensinar e humanizar</li>
+      </ul>
+    `
+  },
+  {
+    title: "Número da Alma: O Que Seu Coração Deseja",
+    badge: "NÚMEROS INICIAIS",
+    banner: "banner-warm",
+    badgeClass: "badge-coral",
+    content: `
+      <h2 class="text-3xl font-bold text-gray-900 mb-4">Número da Alma: O Que Seu Coração Deseja</h2>
+      <p class="text-gray-700 mb-4">O <strong>Número da Alma</strong> revela o que você <strong>realmente quer</strong> no fundo — os desejos que talvez nem você mesmo admita em voz alta. É calculado usando apenas as <strong>vogais</strong> do seu nome completo.</p>
+      <p class="text-gray-700 mb-4">Na tradição numerológica, as vogais representam o <strong>sopro interior</strong>, a essência invisível. As consoantes são a estrutura externa; as vogais são o que habita dentro dessa estrutura.</p>
+      <h3 class="text-2xl font-bold text-gray-900 mb-4 mt-8">Como Calcular</h3>
+      <p class="text-gray-700 mb-4">Some apenas os valores das vogais (A=1, E=5, I=9, O=6, U=3) e reduza a um dígito (exceto números mestres).</p>
+      <div class="bg-purple-50 border-l-4 border-purple-400 p-6 rounded-lg my-6">
+        <p class="text-xl font-bold text-purple-900">Seu Número da Alma é o <span id="ch8Soul"></span></p>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-900 mb-4 mt-8">O Que Cada Alma Deseja</h3>
+      <ul class="list-disc pl-6 text-gray-700 space-y-2">
+        <li><strong>1:</strong> Deseja ser independente, original, líder de sua própria vida</li>
+        <li><strong>2:</strong> Deseja paz, parceria, harmonia e conexão profunda</li>
+        <li><strong>3:</strong> Deseja se expressar, criar, ser admirado e trazer alegria</li>
+        <li><strong>4:</strong> Deseja segurança, ordem, estabilidade e reconhecimento pelo esforço</li>
+        <li><strong>5:</strong> Deseja liberdade, aventura, variedade e experiências novas</li>
+        <li><strong>6:</strong> Deseja amar e ser amado, ter uma família harmoniosa, servir</li>
+        <li><strong>7:</strong> Deseja compreender os mistérios da vida, ter solitude e sabedoria</li>
+        <li><strong>8:</strong> Deseja poder, realização, abundância e reconhecimento</li>
+        <li><strong>9:</strong> Deseja servir a humanidade, deixar um legado de compaixão</li>
+      </ul>
+    `
+  },
+  {
+    title: "Número de Personalidade: Como o Mundo Te Vê",
+    badge: "NÚMEROS INICIAIS",
+    banner: "banner-warm",
+    badgeClass: "badge-coral",
+    content: `
+      <h2 class="text-3xl font-bold text-gray-900 mb-4">Número de Personalidade: Como o Mundo Te Vê</h2>
+      <p class="text-gray-700 mb-4">O <strong>Número de Personalidade</strong> revela a <strong>imagem</strong> que você projeta ao mundo — a primeira impressão que causa, a "máscara" social que usa. É calculado usando apenas as <strong>consoantes</strong> do seu nome completo.</p>
+      <p class="text-gray-700 mb-4">As consoantes formam a <strong>estrutura externa</strong> do nome — assim como sua personalidade forma a estrutura externa da sua presença no mundo.</p>
+      <div class="bg-amber-50 border-l-4 border-amber-400 p-6 rounded-lg my-6">
+        <p class="text-xl font-bold text-amber-900">Seu Número de Personalidade é o <span id="ch9Personality"></span></p>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-900 mb-4 mt-8">O Que Cada Personalidade Projeta</h3>
+      <ul class="list-disc pl-6 text-gray-700 space-y-2">
+        <li><strong>1:</strong> Projeta confiança, liderança, independência</li>
+        <li><strong>2:</strong> Projeta doçura, acessibilidade, gentileza</li>
+        <li><strong>3:</strong> Projeta charme, simpatia, criatividade</li>
+        <li><strong>4:</strong> Projeta seriedade, confiabilidade, solidez</li>
+        <li><strong>5:</strong> Projeta magnetismo, aventura, liberdade</li>
+        <li><strong>6:</strong> Projeta calor humano, responsabilidade, cuidado</li>
+        <li><strong>7:</strong> Projeta mistério, profundidade, intelectualidade</li>
+        <li><strong>8:</strong> Projeta poder, sucesso, autoridade</li>
+        <li><strong>9:</strong> Projeta sabedoria, compaixão, amplitude</li>
+      </ul>
+      <h3 class="text-2xl font-bold text-gray-900 mb-4 mt-8">Alma vs. Personalidade</h3>
+      <p class="text-gray-700 mb-4"><strong>Alma</strong> = o que você sente por dentro. <strong>Personalidade</strong> = o que os outros veem por fora. Quando esses dois números estão alinhados, você transmite autenticidade. Quando conflitam, as pessoas sentem que "algo não bate" — e você pode sentir que vive usando uma máscara.</p>
+    `
+  },
+  {
+    title: "Relacionamentos à Luz da Numerologia",
+    badge: "LIÇÕES EXISTENCIAIS",
+    banner: "banner-mystic",
+    badgeClass: "badge-lilac",
+    content: `
+      <h2 class="text-3xl font-bold text-gray-900 mb-4">Relacionamentos à Luz da Numerologia</h2>
+      <p class="text-gray-700 mb-4">Um dos usos mais fascinantes da numerologia é a <strong>análise de compatibilidade</strong> nos relacionamentos. Não se trata de dizer se um relacionamento "vai dar certo ou não" — mas de compreender as <strong>dinâmicas energéticas</strong> entre duas pessoas e como navegar por elas com consciência.</p>
+      <h3 class="text-2xl font-bold text-gray-900 mb-4 mt-8">Combinações Harmoniosas</h3>
+      <ul class="list-disc pl-6 text-gray-700 space-y-2 mb-6">
+        <li><strong>1 + 5:</strong> Ambos amam independência e aventura. Relação dinâmica e estimulante.</li>
+        <li><strong>2 + 6:</strong> Ambos valorizam harmonia, cuidado e parceria. Relação afetuosa e estável.</li>
+        <li><strong>3 + 5:</strong> Leveza, comunicação e diversão. Relação vibrante e criativa.</li>
+        <li><strong>4 + 8:</strong> Ambos valorizam realização e segurança. Parceria poderosa no mundo material.</li>
+        <li><strong>7 + 9:</strong> Profundidade espiritual e compaixão universal. Relação transformadora.</li>
+      </ul>
+      <h3 class="text-2xl font-bold text-gray-900 mb-4 mt-8">Combinações Desafiadoras</h3>
+      <ul class="list-disc pl-6 text-gray-700 space-y-2">
+        <li><strong>1 + 4:</strong> O 1 quer liberdade, o 4 quer estrutura. Precisam negociar constantemente.</li>
+        <li><strong>2 + 5:</strong> O 2 quer proximidade, o 5 quer espaço. Tensão entre apego e liberdade.</li>
+        <li><strong>4 + 5:</strong> O 4 quer rotina, o 5 quer mudança. Desafio constante de adaptação.</li>
+        <li><strong>6 + 7:</strong> O 6 quer expressão emocional, o 7 quer introspecção. Precisam respeitar ritmos diferentes.</li>
+        <li><strong>8 + 9:</strong> O 8 foca no material, o 9 no espiritual. Precisam encontrar um terreno comum.</li>
+      </ul>
+      <p class="text-gray-700 mt-6">Desafios não são sentenças. São convites ao crescimento mútuo.</p>
+    `
+  },
+  {
+    title: "Ciclos de Vida e Previsões Numerológicas",
+    badge: "LIÇÕES EXISTENCIAIS",
+    banner: "banner-mystic",
+    badgeClass: "badge-lilac",
+    content: `
+      <h2 class="text-3xl font-bold text-gray-900 mb-4">Ciclos de Vida e Previsões Numerológicas</h2>
+      <p class="text-gray-700 mb-4">A numerologia também nos permite mapear os <strong>ciclos de vida</strong> — fases naturais pelas quais todos passamos, cada uma com sua energia e seus temas específicos.</p>
+      <h3 class="text-2xl font-bold text-gray-900 mb-4 mt-8">Os Três Grandes Ciclos</h3>
+      <ul class="list-disc pl-6 text-gray-700 space-y-2 mb-6">
+        <li><strong>Primeiro Ciclo (0 a ~28-30 anos):</strong> infância, juventude, primeiras experiências. Formação da identidade.</li>
+        <li><strong>Segundo Ciclo (~28-30 a 50-55 anos):</strong> vida adulta plena, construção e realização. Carreira, relacionamentos maduros.</li>
+        <li><strong>Terceiro Ciclo (50-55+):</strong> maturidade, sabedoria e colheita. Legado, desapego, ensinamento.</li>
+      </ul>
+      <h3 class="text-2xl font-bold text-gray-900 mb-4 mt-8">O Ano Pessoal</h3>
+      <p class="text-gray-700 mb-4">Some dia + mês de nascimento + ano vigente. Exemplo para 15/03/2026: 1+5+0+3+2+0+2+6 = 19 → 10 → 1. <strong>Ano Pessoal: 1</strong> (ano de novos começos).</p>
+      <div class="grid grid-cols-2 gap-3 mt-6">
+        <div class="bg-purple-50 p-3 rounded-lg text-sm"><strong>1:</strong> Novos começos</div>
+        <div class="bg-purple-50 p-3 rounded-lg text-sm"><strong>2:</strong> Parcerias</div>
+        <div class="bg-purple-50 p-3 rounded-lg text-sm"><strong>3:</strong> Expressão</div>
+        <div class="bg-purple-50 p-3 rounded-lg text-sm"><strong>4:</strong> Trabalho</div>
+        <div class="bg-purple-50 p-3 rounded-lg text-sm"><strong>5:</strong> Mudanças</div>
+        <div class="bg-purple-50 p-3 rounded-lg text-sm"><strong>6:</strong> Família</div>
+        <div class="bg-purple-50 p-3 rounded-lg text-sm"><strong>7:</strong> Introspecção</div>
+        <div class="bg-purple-50 p-3 rounded-lg text-sm"><strong>8:</strong> Realizações</div>
+        <div class="bg-purple-50 p-3 rounded-lg text-sm"><strong>9:</strong> Conclusões</div>
+      </div>
+    `
+  },
+  {
+    title: "Descobrindo Seu Propósito de Vida",
+    badge: "PROPÓSITO",
+    banner: "banner-cosmic",
+    badgeClass: "badge-green",
+    content: `
+      <h2 class="text-3xl font-bold text-gray-900 mb-4">Descobrindo Seu Propósito de Vida</h2>
+      <p class="text-gray-700 mb-4">Seu <strong>propósito de vida</strong> não é uma única coisa. É a <strong>convergência</strong> de todos os números do seu mapa numerológico trabalhando em harmonia.</p>
+      <h3 class="text-2xl font-bold text-gray-900 mb-4 mt-8">A Fórmula do Propósito</h3>
+      <ol class="list-decimal pl-6 text-gray-700 space-y-2 mb-6">
+        <li><strong>Caminho de Vida:</strong> Qual é a missão da minha alma? (Para onde vou?)</li>
+        <li><strong>Expressão:</strong> Quais são meus talentos? (Com o que viajo?)</li>
+        <li><strong>Alma:</strong> O que meu coração deseja? (O que me move por dentro?)</li>
+        <li><strong>Personalidade:</strong> Como me apresento ao mundo? (Que imagem projeto?)</li>
+        <li><strong>Lição:</strong> O que preciso superar? (Que obstáculo preciso transmutar?)</li>
+      </ol>
+      <p class="text-gray-700 mb-4">Quando essas cinco dimensões estão alinhadas, você vive em <strong>fluxo</strong> — a vida parece "fluir", as oportunidades aparecem, os relacionamentos se encaixam, você sente que está no lugar certo.</p>
+      <h3 class="text-2xl font-bold text-gray-900 mb-4 mt-8">Sinais de Que Você Está no Propósito</h3>
+      <ul class="list-disc pl-6 text-gray-700 space-y-2 mb-6">
+        <li>Sente energia ao fazer o que faz</li>
+        <li>As pessoas buscam você naturalmente</li>
+        <li>O tempo parece "desaparecer" quando está em atividade</li>
+        <li>Sente que está contribuindo para algo maior</li>
+        <li>A vida parece "conspirar" a seu favor</li>
+      </ul>
+    `
+  },
+  {
+    title: "Conclusão — Sua Jornada Começa Agora",
+    badge: "LEIA POR ÚLTIMO",
+    banner: "banner-dark",
+    badgeClass: "badge-gray",
+    content: `
+      <h2 class="text-3xl font-bold text-gray-900 mb-4">Conclusão — Sua Jornada Começa Agora</h2>
+      <p class="text-gray-700 mb-4"><span class="userName"></span>, se você chegou até aqui, algo em você já despertou.</p>
+      <p class="text-gray-700 mb-4">A numerologia não é apenas um conjunto de cálculos — é um <strong>espelho</strong>. Um espelho que reflete quem você realmente é, além das máscaras, além dos medos, além das histórias que você conta a si mesmo sobre si mesmo.</p>
+      <p class="text-gray-700 mb-4">Agora você tem em mãos: seu <strong>Caminho de Vida</strong> (a missão da sua alma), sua <strong>Expressão</strong> (os talentos que traz), sua <strong>Alma</strong> (o que seu coração deseja), sua <strong>Personalidade</strong> (como se apresenta ao mundo), e a compreensão dos <strong>ciclos</strong> e do seu <strong>propósito</strong>.</p>
+      <h3 class="text-2xl font-bold text-gray-900 mb-4 mt-8">Próximos Passos</h3>
+      <ol class="list-decimal pl-6 text-gray-700 space-y-2 mb-6">
+        <li>Releia seu número de Caminho de Vida todos os dias durante uma semana</li>
+        <li>Calcule os números das pessoas mais importantes da sua vida</li>
+        <li>Observe os padrões — quais números se repetem?</li>
+        <li>Pratique a integração — alinhe suas ações com seu propósito</li>
+        <li>Aprofunde-se — a numerologia é um oceano; este livro é apenas o mergulho inicial</li>
+      </ol>
+      <h3 class="text-2xl font-bold text-gray-900 mb-4 mt-8">Uma Última Reflexão</h3>
+      <p class="text-gray-700 mb-4">Os números não criam seu destino. Eles <strong>revelam</strong> o terreno sobre o qual você caminha. O que você constrói nesse terreno — isso sim é escolha sua.</p>
+      <p class="text-gray-700 mb-4">Você é muito mais do que seus números. Mas conhecê-los é reconhecer as ferramentas que a vida colocou em suas mãos. Use-as com sabedoria, com amor e com coragem.</p>
+      <p class="text-gray-700 mt-8">Gratidão,<br><strong>Equipe</strong></p>
+    `
+  }
+];
+
+// Detalhes dos números 1-9
+const NUMBER_DETAILS = {
+  1: { title: "Número 1 — O Líder", words: "Independência, originalidade, iniciativa, coragem, liderança", mission: "Aprender a liderar com autenticidade, desenvolvendo sua individualidade e inspirando outros.", strengths: "Determinação, coragem, capacidade de iniciar projetos, originalidade, autossuficiência.", challenges: "Teimosia, autoritarismo, impaciência, isolamento emocional.", love: "Precisa de um parceiro que respeite sua independência.", career: "Empreendedorismo, liderança, artes, profissões com iniciativa.", phrase: "Eu crio meu próprio caminho." },
+  2: { title: "Número 2 — O Diplomata", words: "Cooperação, sensibilidade, harmonia, intuição, parceria", mission: "Aprender a cooperar e trazer harmonia aos ambientes e relacionamentos.", strengths: "Empatia, mediação, intuição, sensibilidade artística.", challenges: "Excesso de sensibilidade, dificuldade em dizer não, indecisão.", love: "Busca conexão profunda e parceria verdadeira.", career: "Terapia, aconselhamento, diplomacia, música, artes.", phrase: "Eu construo pontes." },
+  3: { title: "Número 3 — O Comunicador", words: "Criatividade, expressão, alegria, comunicação, inspiração", mission: "Expressar criatividade e inspirar através da comunicação e da arte.", strengths: "Carisma, talento artístico, otimismo, facilidade com palavras.", challenges: "Superficialidade, dispersão, autocrítica.", love: "Precisa de leveza e admiração.", career: "Escrita, jornalismo, atuação, design, marketing.", phrase: "Eu expresso e ilumino." },
+  4: { title: "Número 4 — O Construtor", words: "Disciplina, organização, trabalho, estabilidade, lealdade", mission: "Construir bases sólidas e criar estruturas que sustentem a si e aos outros.", strengths: "Confiabilidade, organização, perseverança, senso prático.", challenges: "Rigidez, teimosia, medo de mudanças.", love: "É leal e comprometido, mas pode parecer frio.", career: "Engenharia, administração, contabilidade, arquitetura.", phrase: "Eu construo com solidez." },
+  5: { title: "Número 5 — O Libertador", words: "Liberdade, aventura, versatilidade, mudança, experiência", mission: "Experimentar a vida em diversidade e ensinar sobre liberdade autêntica.", strengths: "Adaptabilidade, curiosidade, magnetismo, coragem.", challenges: "Instabilidade, impulsividade, comprometimento difícil.", love: "Precisa de espaço e variedade.", career: "Jornalismo, turismo, vendas, comunicação.", phrase: "Eu vivo e experiencio." },
+  6: { title: "Número 6 — O Cuidador", words: "Amor, responsabilidade, família, harmonia, serviço", mission: "Aprender o amor incondicional e criar beleza e harmonia.", strengths: "Amor genuíno, responsabilidade, capacidade de cura.", challenges: "Perfeccionismo, sacrifício excessivo, dificuldade em receber.", love: "Ama profundamente, mas pode se tornar sufocante.", career: "Medicina, psicologia, educação, design de interiores.", phrase: "Eu amo e curo." },
+  7: { title: "Número 7 — O Buscador", words: "Sabedoria, introspecção, espiritualidade, análise, mistério", mission: "Buscar a verdade profunda e compartilhar conhecimento transformador.", strengths: "Profundidade intelectual, intuição, capacidade analítica.", challenges: "Isolamento, desconfiança, perfeccionismo mental.", love: "Precisa de profundidade e espaço.", career: "Pesquisa, filosofia, psicologia, espiritualidade.", phrase: "Eu busco e compreendo." },
+  8: { title: "Número 8 — O Realizador", words: "Poder, abundância, realização material, justiça, autoridade", mission: "Dominar o mundo material com integridade e exercer liderança com justiça.", strengths: "Visão estratégica, capacidade executiva, resiliência.", challenges: "Materialismo, excesso de trabalho, autoritarismo.", love: "Precisa de parceiro que respeite sua ambição.", career: "Negócios, finanças, direito, política.", phrase: "Eu realizo com maestria." },
+  9: { title: "Número 9 — O Humanitário", words: "Compaixão, sabedoria, conclusão, universalidade, generosidade", mission: "Servir à humanidade e completar ciclos com sabedoria e desapego.", strengths: "Visão ampla, generosidade, capacidade de perdoar.", challenges: "Dificuldade com desapego, idealismo excessivo.", love: "Ama de forma universal, mas pode ter dificuldade com a intimidade.", career: "ONGs, ativismo, artes, espiritualidade, ensino.", phrase: "Eu sirvo e completo." }
+};
+
+function renderNumberDetails() {
+  const container = document.getElementById('numberDetails');
+  if (!container) return;
+  container.innerHTML = Object.values(NUMBER_DETAILS).map(n => `
+    <div class="bg-purple-50/60 p-6 rounded-lg mb-4">
+      <h3 class="font-bold text-purple-900 text-lg mb-2">${n.title}</h3>
+      <p class="text-gray-700 text-sm mb-1"><strong>Palavras-chave:</strong> ${n.words}</p>
+      <p class="text-gray-700 text-sm mb-1"><strong>Missão:</strong> ${n.mission}</p>
+      <p class="text-gray-700 text-sm mb-1"><strong>Pontos fortes:</strong> ${n.strengths}</p>
+      <p class="text-gray-700 text-sm mb-1"><strong>Desafios:</strong> ${n.challenges}</p>
+      <p class="text-gray-700 text-sm mb-1"><strong>No amor:</strong> ${n.love}</p>
+      <p class="text-gray-700 text-sm mb-1"><strong>Carreiras:</strong> ${n.career}</p>
+      <p class="text-gray-700 text-sm italic mt-2">✨ "${n.phrase}"</p>
+    </div>
+  `).join('');
+}
+
+function renderChapters() {
+  const container = document.getElementById('chaptersContainer');
+  container.innerHTML = CHAPTERS.map((ch, i) => `
+    <div id="view-ch${i+1}" class="view">
+      <div class="${ch.banner} h-48 flex items-end p-6 relative">
+        <div class="relative z-10">
+          <span class="badge ${ch.badgeClass} mb-2 inline-block">${ch.badge}</span>
+          <h2 class="text-3xl font-bold text-white">${ch.title}</h2>
+        </div>
+      </div>
+      <div class="content-card">
+        ${ch.content}
+        ${i < CHAPTERS.length - 1 ? `<button onclick="showView('view-ch${i+2}')" class="btn-primary mt-6">Próximo Capítulo →</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function generateIndex() {
+  const list = document.getElementById('indexList');
+  list.innerHTML = CHAPTERS.map((ch, i) => `
+    <div class="chapter-row" onclick="showView('view-ch${i+1}')">
+      <span class="chapter-number">${String(i+1).padStart(2,'0')}</span>
+      <div class="flex-1">
+        <div class="font-bold text-gray-900">${ch.title}</div>
+        <span class="badge ${ch.badgeClass}">${ch.badge}</span>
+      </div>
+      <div class="chapter-arrow ${ch.badgeClass.includes('blue')?'arrow-blue':ch.badgeClass.includes('coral')?'arrow-coral':ch.badgeClass.includes('lilac')?'arrow-lilac':ch.badgeClass.includes('green')?'arrow-green':'arrow-gray'}">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </div>
+    </div>
+  `).join('');
+}
+
+function generateEbook() {
+  const name = document.getElementById('inputName').value.trim();
+  const date = document.getElementById('inputDate').value;
+  if (!name || !date) {
+    document.getElementById('entryError').classList.remove('hidden');
+    return;
+  }
+  document.getElementById('entryError').classList.add('hidden');
+
+  const lifePath = calcLifePath(date);
+  const nameData = calcNameNumbers(name);
+  if (!lifePath || !nameData) return;
+
+  userData = { name, date, firstName: name.split(' ')[0], lifePath, ...nameData };
+
+  document.getElementById('heroName').textContent = name;
+  document.getElementById('heroDate').textContent = date.split('-').reverse().join('/');
+  document.querySelectorAll('.userName').forEach(el => el.textContent = userData.firstName);
+  document.getElementById('sumLifePath').textContent = lifePath;
+  document.getElementById('sumExpression').textContent = nameData.expression;
+  document.getElementById('sumSoul').textContent = nameData.soul;
+  document.getElementById('sumPersonality').textContent = nameData.personality;
+
+  document.getElementById('ch4LifePath').textContent = lifePath;
+  document.getElementById('ch7Expression').textContent = nameData.expression;
+  document.getElementById('ch8Soul').textContent = nameData.soul;
+  document.getElementById('ch9Personality').textContent = nameData.personality;
+
+  generateIndex();
+  showView('view-hero');
+}
+
+function showView(id) {
+  // A seção de entrada (hero) só aparece ao abrir ou refazer o mapa.
+  const entryHero = document.getElementById('hero');
+  if (entryHero) entryHero.style.display = id === 'view-entry' ? '' : 'none';
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function exportPDF() {
+  const element = document.createElement('div');
+  element.style.padding = '20px';
+  element.style.background = 'white';
+  element.style.fontFamily = 'Inter, sans-serif';
+  let content = `<h1 style="text-align:center; font-size:28px; color:#1a1a3e; margin-bottom:8px;">OS NÚMEROS DA SUA ALMA</h1>`;
+  content += `<p style="text-align:center; color:#666; margin-bottom:30px;">${userData.name} — ${userData.date ? userData.date.split('-').reverse().join('/') : ''}</p>`;
+  document.querySelectorAll('[id^="view-ch"]').forEach(v => {
+    const card = v.querySelector('.content-card');
+    if (card) content += `<div style="margin-bottom:30px; padding:20px; border:1px solid #eee; border-radius:12px;">${card.innerHTML}</div>`;
+  });
+  element.innerHTML = content;
+  document.body.appendChild(element);
+  html2pdf().from(element).set({
+    margin: 10,
+    filename: `os-numeros-da-sua-alma-${userData.name.replace(/\s+/g,'-').toLowerCase()}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  }).save().then(() => document.body.removeChild(element));
+}
+
+renderChapters();
+renderNumberDetails();
+</script>
+</body>
+</html>
